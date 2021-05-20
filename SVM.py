@@ -21,7 +21,4 @@ for title, normalize in titles_options:
                                  normalize=normalize)
     disp.ax_.set_title(title)
 
-    print(title)
-    print(disp.confusion_matrix)
-
 plt.show()
