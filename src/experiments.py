@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-from sklearn.metrics import plot_confusion_matrix
 
 from sklearn.model_selection import train_test_split, KFold
 
@@ -9,15 +8,17 @@ import matplotlib.pyplot as plt
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from src.plots import plot_error
-from src.utils import get_dataset, Bootstrap_split
+from src.plots import plot_error, plot_confusion_matrix
+from src.utils import get_dataset, Bootstrap_split, make_dir
 
 np.random.seed(2021)
+np.set_printoptions(suppress=True)
 
 
 class Experiment:
     def __init__(self, input_path, output_path):
         self.X, self.y = get_dataset(input_path)
+        self.label = list(set(self.y))
         self.output_path = output_path
         self.classifiers = []
 
@@ -30,32 +31,33 @@ class Experiment:
 
     def error(self, groups, classifier):
         error = []
+        cm = np.zeros((len(self.label), len(self.label)))
+        cnt = 0
         for train, test in groups:
             classifier.fit([self.X[i] for i in train], [self.y[i] for i in train])
             y_p = classifier.predict([self.X[i] for i in test])
-            error.append(sum(y_p != [self.y[i] for i in test]) / len(y_p))
-        return np.array(error)
+            y_test = [self.y[i] for i in test]
+            error.append(sum(y_p != y_test) / len(y_test))
+            for i in range(len(y_test)):
+                cm[self.label.index(y_p[i])][self.label.index(y_test[i])] += 1
+            cnt += 1
+        cm = np.round(cm/cnt).astype(int)
+        return np.array(error), cm
 
     def crossValidation(self, n_splits=10):
-        new_path = self.output_path + "/cross_validation"
-        if not os.path.exists(new_path):
-            os.makedirs(new_path)
-        k_fold = "/k_fold"
-        if not os.path.exists(new_path + k_fold):
-            os.makedirs(new_path + k_fold)
-        bootstrap = "/bootstrap"
-        if not os.path.exists(new_path + bootstrap):
-            os.makedirs(new_path + bootstrap)
+        new_path = make_dir(self.output_path + "/cross_validation")
+        k_fold = make_dir(new_path + "/k_fold")
+        bootstrap = make_dir(new_path + "/bootstrap")
 
         kf = KFold(n_splits=n_splits, shuffle=True, random_state=0)
         bt_train, bt_test = Bootstrap_split(self.X, n_splits=n_splits)
 
         for classifier in self.classifiers:
-            error_kf = self.error(kf.split(self.X), classifier[1])
-            plot_error(error_kf, new_path + k_fold, classifier[0])
-
-            error_bt = self.error(zip(bt_train, bt_test), classifier[1])
-            plot_error(error_bt, new_path + bootstrap, classifier[0])
+            for method, path in zip([kf.split(self.X), zip(bt_train, bt_test)], [k_fold, bootstrap]):
+                error, cm = self.error(method, classifier[1])
+                plot_error(error, path, classifier[0])
+                plot_confusion_matrix(classifier[0], path, cm, self.label)
+                np.savetxt(path + '/confusion_matrix_'+classifier[0]+'.txt', cm, delimiter=',')
 
     def getConfusionMatrix(self, test_size=0.3):
         new_path = self.output_path + "/confusion_matrix"

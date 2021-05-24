@@ -14,10 +14,10 @@ dt = DecisionTreeClassifier(random_state=0)
 experiment = Experiment('faces', 'results/faces')
 
 # Add classifiers
-experiment.addClassifier((svm, 'svm'))
 experiment.addClassifier((knn, 'knn'))
+experiment.addClassifier((svm, 'svm'))
 experiment.addClassifier((dt, 'dt'))
 
-# Confusion matrix
+# Croos Validation
 experiment.crossValidation()
 

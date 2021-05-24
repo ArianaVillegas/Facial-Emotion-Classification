@@ -2,9 +2,13 @@ import copy
 import os
 
 import numpy as np
-from matplotlib import pyplot as plt
-from scipy import stats
 from skimage.io import imread
+
+
+def make_dir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
 
 
 def get_dataset(folder):
