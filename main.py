@@ -6,9 +6,9 @@ from src.experiments import Experiment
 
 
 # Classifiers
-svm = LinearSVC(dual=True, max_iter=30000)
+svm = LinearSVC(max_iter=30000)
 knn = KNeighborsClassifier(n_neighbors=15, weights='distance')
-dt = DecisionTreeClassifier(random_state=0)
+dt = DecisionTreeClassifier(criterion='gini')
 
 # Experiments
 experiment = Experiment('faces', 'results/faces')
