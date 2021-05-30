@@ -2,6 +2,7 @@ import copy
 import os
 
 import numpy as np
+import pywt
 from skimage.io import imread
 
 
@@ -18,7 +19,8 @@ def get_dataset(folder):
         path = os.path.join(folder, emotion)
         for image_name in os.listdir(path):
             image = imread(os.path.join(path, image_name), as_gray=True)
-            features = np.ndarray.flatten(image)
+            coeff = pywt.dwt2(image, 'haar')
+            features = np.ndarray.flatten(coeff[0])
             X.append(copy.deepcopy(features))
             y.append(emotion)
     return X, y
